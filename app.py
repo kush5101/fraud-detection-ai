@@ -137,6 +137,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Session State Initialization
+if 'history' not in st.session_state:
+    st.session_state.history = pd.DataFrame(columns=['ID', 'Amount', 'Time', 'IP Risk', 'Dist(km)', 'Risk Score', 'Status'])
+if 'stats' not in st.session_state:
+    st.session_state.stats = {'total': 0, 'safe': 0, 'fraud': 0}
+
 # Custom CSS for Cyberpunk/Tech look (Glassmorphism)
 st.markdown("""
 <style>
@@ -248,11 +254,6 @@ with col_chart:
     st.subheader("AI Confidence Levels")
     chart_placeholder = st.empty()
 
-# Session State
-if 'history' not in st.session_state:
-    st.session_state.history = pd.DataFrame(columns=['ID', 'Amount', 'Time', 'IP Risk', 'Dist(km)', 'Risk Score', 'Status'])
-if 'stats' not in st.session_state:
-    st.session_state.stats = {'total': 0, 'safe': 0, 'fraud': 0}
 
 # Simulation Control
 if st.button("▶ START / ⏹ STOP MONITORING"):
