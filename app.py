@@ -217,14 +217,25 @@ st.title("🛡️ Hybrid AI Fraud Detection System")
 
 # Top Metrics
 col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.markdown('<div class="metric-card"><div class="metric-label">Processed TXNs</div><div class="metric-value" id="total_count">0</div></div>', unsafe_allow_html=True)
-with col2:
-    st.markdown('<div class="metric-card"><div class="metric-label">Safe Verified</div><div class="metric-value" style="color: #10b981;">0</div></div>', unsafe_allow_html=True)
-with col3:
-    st.markdown('<div class="metric-card"><div class="metric-label">Fraud Detected</div><div class="metric-value" style="color: #ef4444;">0</div></div>', unsafe_allow_html=True)
-with col4:
-    st.markdown('<div class="metric-card"><div class="metric-label">Global Threat Level</div><div class="metric-value" style="color: #f59e0b;">LOW</div></div>', unsafe_allow_html=True)
+# Create placeholders for dynamic updates
+p1 = col1.empty()
+p2 = col2.empty()
+p3 = col3.empty()
+p4 = col4.empty()
+
+def render_metric(placeholder, label, value, color="#10b981"):
+    placeholder.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-label">{label}</div>
+        <div class="metric-value" style="color: {color};">{value}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Initial Render
+render_metric(p1, "Processed TXNs", st.session_state.stats['total'])
+render_metric(p2, "Safe Verified", st.session_state.stats['safe'])
+render_metric(p3, "Fraud Detected", st.session_state.stats['fraud'], "#ef4444")
+render_metric(p4, "Global Threat Level", "LOW", "#f59e0b")
 
 # Main Feed & Charts
 col_feed, col_chart = st.columns([2, 1])
@@ -239,7 +250,6 @@ with col_chart:
 
 # Session State
 if 'history' not in st.session_state:
-    # Initial empty dataframe
     st.session_state.history = pd.DataFrame(columns=['ID', 'Amount', 'Time', 'IP Risk', 'Dist(km)', 'Risk Score', 'Status'])
 if 'stats' not in st.session_state:
     st.session_state.stats = {'total': 0, 'safe': 0, 'fraud': 0}
@@ -269,10 +279,22 @@ if st.session_state.get('running', False):
         st.session_state.stats['safe'] += 1
         status = "SAFE"
         
-    # UI Updates (Metrics)
-    col1.metric("Processed", st.session_state.stats['total'])
-    col2.metric("Safe", st.session_state.stats['safe'])
-    col3.metric("Fraud", st.session_state.stats['fraud'])
+    # Calculate Threat Level
+    fraud_rate = st.session_state.stats['fraud'] / st.session_state.stats['total'] if st.session_state.stats['total'] > 0 else 0
+    if fraud_rate < 0.05:
+        threat_level, threat_color = "LOW", "#10b981"
+    elif fraud_rate < 0.15:
+        threat_level, threat_color = "MODERATE", "#f59e0b"
+    elif fraud_rate < 0.30:
+        threat_level, threat_color = "HIGH", "#ef4444"
+    else:
+        threat_level, threat_color = "CRITICAL", "#7f1d1d"
+
+    # UI Updates (Dynamic Cards)
+    render_metric(p1, "Processed TXNs", st.session_state.stats['total'])
+    render_metric(p2, "Safe Verified", st.session_state.stats['safe'])
+    render_metric(p3, "Fraud Detected", st.session_state.stats['fraud'], "#ef4444")
+    render_metric(p4, "Global Threat Level", threat_level, threat_color)
     
     # Feed Update
     new_row = {
